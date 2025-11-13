@@ -78,6 +78,7 @@ npm run preview
 - **Vite** - Build tool and dev server
 - **Material-UI (MUI)** - Component library
 - **Emotion** - CSS-in-JS styling
+- **Web Audio API** - Real-time audio synthesis
 
 ## 📁 Project Structure
 
@@ -93,6 +94,8 @@ ACTAM-demo/
 │   │   ├── ChordSelector.jsx   # Chord selection dialog
 │   │   ├── StatusDisplay.jsx   # Current position display
 │   │   └── index.js            # Component exports
+│   ├── utils/
+│   │   └── audioEngine.js      # Web Audio API sound synthesis
 │   ├── App.jsx                 # Main application
 │   ├── App.css                 # App styles
 │   ├── main.jsx                # Entry point
@@ -125,4 +128,3 @@ ACTAM-demo/
 - Currently supports 4/4 time signature
 - 4 beats per measure
 - Visual emphasis on beat 1 (downbeat)
-

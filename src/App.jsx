@@ -5,6 +5,7 @@ import ControlPanel from "./components/ControlPanel";
 import Timeline from "./components/Timeline";
 import StatusDisplay from "./components/StatusDisplay";
 import ChordSelector from "./components/ChordSelector";
+import { audioEngine } from "./utils/audioEngine";
 import "./App.css";
 
 function App() {
@@ -22,7 +23,18 @@ function App() {
   useEffect(() => {
     if (isPlaying) {
       intervalRef.current = setInterval(() => {
-        setCurrentBeat((prev) => (prev + 1) % (measures * 4));
+        setCurrentBeat((prev) => {
+          const nextBeat = (prev + 1) % (measures * 4);
+
+          // Play chord root note if chord exists for the NEXT beat
+          if (beatChords[nextBeat]) {
+            const chordName = beatChords[nextBeat];
+            const rootNote = chordName.split(" ")[0]; // Extract root note (e.g., "C" from "C Major")
+            audioEngine.playChordRoot(rootNote, bpm);
+          }
+
+          return nextBeat;
+        });
       }, beatInterval);
     } else {
       if (intervalRef.current) {
@@ -35,9 +47,11 @@ function App() {
         clearInterval(intervalRef.current);
       }
     };
-  }, [isPlaying, bpm, measures, beatInterval]);
+  }, [isPlaying, bpm, measures, beatInterval, beatChords]);
 
   const togglePlay = () => {
+    // Initialize audio engine on first play (requires user interaction)
+    audioEngine.init();
     setIsPlaying(true);
   };
 
