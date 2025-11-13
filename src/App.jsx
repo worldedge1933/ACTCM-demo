@@ -1,14 +1,26 @@
 import { useState, useEffect, useRef } from "react";
-import { Container, Typography, Box } from "@mui/material";
+import {
+  Drawer,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Box,
+} from "@mui/material";
+import { Piano, Audiotrack } from "@mui/icons-material";
 import Header from "./components/Header";
-import ControlPanel from "./components/ControlPanel";
-import Timeline from "./components/Timeline";
-import StatusDisplay from "./components/StatusDisplay";
-import ChordSelector from "./components/ChordSelector";
+import ChordProgression from "./pages/ChordProgression";
+import SoundDesign from "./pages/SoundDesign";
 import { audioEngine } from "./utils/audioEngine";
 import "./App.css";
 
 function App() {
+  // Navigation state
+  const [currentPage, setCurrentPage] = useState("chordProgression");
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  // Music state
   const [bpm, setBpm] = useState(120);
   const [isPlaying, setIsPlaying] = useState(false);
   const [measures, setMeasures] = useState(4);
@@ -29,7 +41,13 @@ function App() {
           // Play chord root note if chord exists for the NEXT beat
           if (beatChords[nextBeat]) {
             const chordName = beatChords[nextBeat];
-            const rootNote = chordName.split(" ")[0]; // Extract root note (e.g., "C" from "C Major")
+            // Extract root note - could be 1 char (C, D, E, etc.) or 2 chars (C#, D#, etc.)
+            let rootNote;
+            if (chordName.length >= 2 && chordName[1] === "#") {
+              rootNote = chordName.substring(0, 2); // C#, D#, etc.
+            } else {
+              rootNote = chordName[0]; // C, D, E, etc.
+            }
             audioEngine.playChordRoot(rootNote, bpm);
           }
 
@@ -99,53 +117,75 @@ function App() {
     });
   };
 
-  const handleCloseChordSelector = () => {
-    setSelectedBeat(null);
+  // Menu navigation
+  const menuItems = [
+    { id: "chordProgression", label: "Chord Progression", icon: <Piano /> },
+    { id: "soundDesign", label: "Sound Design", icon: <Audiotrack /> },
+  ];
+
+  const handleMenuClick = () => {
+    setDrawerOpen(true);
+  };
+
+  const handleDrawerClose = () => {
+    setDrawerOpen(false);
+  };
+
+  const handlePageChange = (pageId) => {
+    // Pause playback when switching pages
+    if (isPlaying) {
+      setIsPlaying(false);
+    }
+    setCurrentPage(pageId);
+    setDrawerOpen(false);
   };
 
   return (
     <>
-      <Header />
+      <Header onMenuClick={handleMenuClick} />
 
-      <Container maxWidth="lg" sx={{ mt: 4 }}>
-        <Box sx={{ textAlign: "center", my: 4 }}>
-          <Typography variant="h3" component="h1" gutterBottom>
-            Music Synthesizer
-          </Typography>
-          <Typography variant="body1" color="text.secondary" paragraph>
-            A music creation tool based on Web Audio API
-          </Typography>
+      {/* Side Drawer Navigation */}
+      <Drawer anchor="left" open={drawerOpen} onClose={handleDrawerClose}>
+        <Box sx={{ width: 250 }} role="presentation">
+          <List>
+            {menuItems.map((item) => (
+              <ListItem key={item.id} disablePadding>
+                <ListItemButton
+                  selected={currentPage === item.id}
+                  onClick={() => handlePageChange(item.id)}
+                >
+                  <ListItemIcon>{item.icon}</ListItemIcon>
+                  <ListItemText primary={item.label} />
+                </ListItemButton>
+              </ListItem>
+            ))}
+          </List>
         </Box>
+      </Drawer>
 
-        <ControlPanel
-          isPlaying={isPlaying}
+      {/* Page Content */}
+      {currentPage === "chordProgression" && (
+        <ChordProgression
           bpm={bpm}
-          measures={measures}
-          onPlay={togglePlay}
-          onStop={stopPlay}
-          onReplay={replayFromStart}
-          onRefresh={refreshPage}
-          onBpmChange={handleBpmChange}
-          onAddMeasure={addMeasure}
-        />
-
-        <Timeline
+          setBpm={setBpm}
+          isPlaying={isPlaying}
           measures={measures}
           currentBeat={currentBeat}
-          onBeatClick={handleBeatClick}
           beatChords={beatChords}
+          selectedBeat={selectedBeat}
+          togglePlay={togglePlay}
+          stopPlay={stopPlay}
+          replayFromStart={replayFromStart}
+          refreshPage={refreshPage}
+          addMeasure={addMeasure}
+          handleBpmChange={handleBpmChange}
+          handleBeatClick={handleBeatClick}
+          handleChordSelect={handleChordSelect}
+          setSelectedBeat={setSelectedBeat}
         />
+      )}
 
-        <StatusDisplay currentBeat={currentBeat} />
-
-        <ChordSelector
-          open={selectedBeat !== null}
-          onClose={handleCloseChordSelector}
-          onSelect={handleChordSelect}
-          beatIndex={selectedBeat}
-          currentChord={selectedBeat !== null ? beatChords[selectedBeat] : null}
-        />
-      </Container>
+      {currentPage === "soundDesign" && <SoundDesign />}
     </>
   );
 }

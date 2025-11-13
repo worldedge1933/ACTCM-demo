@@ -1,7 +1,7 @@
 import { AppBar, Toolbar, IconButton, Typography } from "@mui/material";
 import { Menu as MenuIcon, MusicNote } from "@mui/icons-material";
 
-function Header() {
+function Header({ onMenuClick }) {
   return (
     <AppBar position="static">
       <Toolbar>
@@ -11,6 +11,7 @@ function Header() {
           color="inherit"
           aria-label="menu"
           sx={{ mr: 2 }}
+          onClick={onMenuClick}
         >
           <MenuIcon />
         </IconButton>
