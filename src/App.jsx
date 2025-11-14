@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import {
   Drawer,
   List,
@@ -25,30 +25,54 @@ function App() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [measures, setMeasures] = useState(4);
   const [currentBeat, setCurrentBeat] = useState(0);
-  const [beatChords, setBeatChords] = useState({}); // Store chords for each beat { beatIndex: chordName }
-  const [selectedBeat, setSelectedBeat] = useState(null); // Currently selected beat
+  const [beatChords, setBeatChords] = useState({}); // Store chords for each beat { beatIndex: { first, second } }
+  const [selectedBeat, setSelectedBeat] = useState(null); // { beatIndex, half }
   const intervalRef = useRef(null);
+  const halfBeatTimeoutRef = useRef(null);
 
   // Calculate time interval per beat (milliseconds)
   const beatInterval = (60 / bpm) * 1000;
+  const halfBeatInterval = beatInterval / 2;
+
+  // Helper function to extract root note from chord name
+  const extractRootNote = (chordName) => {
+    if (!chordName) return null;
+    if (chordName.length >= 2 && chordName[1] === "#") {
+      return chordName.substring(0, 2); // C#, D#, etc.
+    }
+    return chordName[0]; // C, D, E, etc.
+  };
+
+  // Helper function to play chord
+  const playChord = useCallback(
+    (chordName) => {
+      if (chordName) {
+        const rootNote = extractRootNote(chordName);
+        if (rootNote) {
+          audioEngine.playChordRoot(rootNote, bpm);
+        }
+      }
+    },
+    [bpm]
+  );
 
   useEffect(() => {
     if (isPlaying) {
       intervalRef.current = setInterval(() => {
         setCurrentBeat((prev) => {
           const nextBeat = (prev + 1) % (measures * 4);
+          const chords = beatChords[nextBeat];
 
-          // Play chord root note if chord exists for the NEXT beat
-          if (beatChords[nextBeat]) {
-            const chordName = beatChords[nextBeat];
-            // Extract root note - could be 1 char (C, D, E, etc.) or 2 chars (C#, D#, etc.)
-            let rootNote;
-            if (chordName.length >= 2 && chordName[1] === "#") {
-              rootNote = chordName.substring(0, 2); // C#, D#, etc.
-            } else {
-              rootNote = chordName[0]; // C, D, E, etc.
-            }
-            audioEngine.playChordRoot(rootNote, bpm);
+          // Play first half chord immediately
+          if (chords?.first) {
+            playChord(chords.first);
+          }
+
+          // Schedule second half chord
+          if (chords?.second) {
+            halfBeatTimeoutRef.current = setTimeout(() => {
+              playChord(chords.second);
+            }, halfBeatInterval);
           }
 
           return nextBeat;
@@ -58,14 +82,28 @@ function App() {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
       }
+      if (halfBeatTimeoutRef.current) {
+        clearTimeout(halfBeatTimeoutRef.current);
+      }
     }
 
     return () => {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
       }
+      if (halfBeatTimeoutRef.current) {
+        clearTimeout(halfBeatTimeoutRef.current);
+      }
     };
-  }, [isPlaying, bpm, measures, beatInterval, beatChords]);
+  }, [
+    isPlaying,
+    bpm,
+    measures,
+    beatInterval,
+    halfBeatInterval,
+    beatChords,
+    playChord,
+  ]);
 
   const togglePlay = () => {
     // Initialize audio engine on first play (requires user interaction)
@@ -101,18 +139,28 @@ function App() {
     }
   };
 
-  const handleBeatClick = (beatIndex) => {
-    setSelectedBeat(beatIndex);
+  const handleBeatClick = (beatIndex, half) => {
+    setSelectedBeat({ beatIndex, half });
   };
 
-  const handleChordSelect = (beatIndex, chord) => {
+  const handleChordSelect = (beatIndex, half, chord) => {
     setBeatChords((prev) => {
       const newChords = { ...prev };
-      if (chord === null) {
-        delete newChords[beatIndex];
-      } else {
-        newChords[beatIndex] = chord;
+
+      if (!newChords[beatIndex]) {
+        newChords[beatIndex] = {};
       }
+
+      if (chord === null) {
+        delete newChords[beatIndex][half];
+        // Remove beat entry if both halves are empty
+        if (!newChords[beatIndex].first && !newChords[beatIndex].second) {
+          delete newChords[beatIndex];
+        }
+      } else {
+        newChords[beatIndex][half] = chord;
+      }
+
       return newChords;
     });
   };

@@ -62,7 +62,13 @@ function ChordProgression({
         open={selectedBeat !== null}
         onClose={() => setSelectedBeat(null)}
         onSelect={handleChordSelect}
-        beatIndex={selectedBeat}
+        beatIndex={selectedBeat?.beatIndex}
+        half={selectedBeat?.half}
+        currentChord={
+          selectedBeat
+            ? beatChords[selectedBeat.beatIndex]?.[selectedBeat.half]
+            : null
+        }
       />
     </Container>
   );

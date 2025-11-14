@@ -40,30 +40,55 @@ function Measure({ measureIndex, currentBeat, onBeatClick, beatChords }) {
       >
         {[0, 1, 2, 3].map((beatInMeasure) => {
           const absoluteBeat = measureIndex * 4 + beatInMeasure;
-          const chord = beatChords[absoluteBeat];
+          const chords = beatChords[absoluteBeat];
           return (
             <Box
               key={beatInMeasure}
               sx={{
                 flex: 1,
                 display: "flex",
-                justifyContent: "center",
+                flexDirection: "row",
                 alignItems: "center",
                 borderRight: beatInMeasure < 3 ? "1px solid #f0f0f0" : "none",
               }}
             >
-              {chord && (
-                <Typography
-                  variant="caption"
-                  sx={{
-                    fontWeight: "bold",
-                    fontSize: "0.7rem",
-                    color: "secondary.main",
-                  }}
-                >
-                  {chord}
-                </Typography>
-              )}
+              {/* First half chord */}
+              <Box
+                sx={{
+                  flex: 1,
+                  display: "flex",
+                  justifyContent: "center",
+                  borderRight: "1px dashed #f5f5f5",
+                }}
+              >
+                {chords?.first && (
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      fontWeight: "bold",
+                      fontSize: "0.65rem",
+                      color: "primary.main",
+                    }}
+                  >
+                    {chords.first}
+                  </Typography>
+                )}
+              </Box>
+              {/* Second half chord */}
+              <Box sx={{ flex: 1, display: "flex", justifyContent: "center" }}>
+                {chords?.second && (
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      fontWeight: "bold",
+                      fontSize: "0.65rem",
+                      color: "secondary.main",
+                    }}
+                  >
+                    {chords.second}
+                  </Typography>
+                )}
+              </Box>
             </Box>
           );
         })}
@@ -73,6 +98,7 @@ function Measure({ measureIndex, currentBeat, onBeatClick, beatChords }) {
       <Box sx={{ display: "flex", flex: 1 }}>
         {[0, 1, 2, 3].map((beatInMeasure) => {
           const absoluteBeat = measureIndex * 4 + beatInMeasure;
+          const chords = beatChords[absoluteBeat];
           return (
             <Beat
               key={beatInMeasure}
@@ -80,7 +106,7 @@ function Measure({ measureIndex, currentBeat, onBeatClick, beatChords }) {
               absoluteBeat={absoluteBeat}
               currentBeat={currentBeat}
               onClick={onBeatClick}
-              chord={null}
+              chords={chords}
             />
           );
         })}

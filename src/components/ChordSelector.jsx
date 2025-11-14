@@ -40,7 +40,14 @@ const CHORD_QUALITIES = [
   { id: "sus4", label: "Suspended 4th", suffix: "sus4" },
 ];
 
-function ChordSelector({ open, onClose, onSelect, beatIndex, currentChord }) {
+function ChordSelector({
+  open,
+  onClose,
+  onSelect,
+  beatIndex,
+  half,
+  currentChord,
+}) {
   const [selectedRoot, setSelectedRoot] = useState(null);
 
   const handleRootSelect = (root) => {
@@ -50,7 +57,7 @@ function ChordSelector({ open, onClose, onSelect, beatIndex, currentChord }) {
   const handleQualitySelect = (quality) => {
     if (selectedRoot) {
       const chordName = selectedRoot + quality.suffix;
-      onSelect(beatIndex, chordName);
+      onSelect(beatIndex, half, chordName);
       setSelectedRoot(null);
       onClose();
     }
@@ -62,20 +69,22 @@ function ChordSelector({ open, onClose, onSelect, beatIndex, currentChord }) {
   };
 
   const handleClearChord = () => {
-    onSelect(beatIndex, null);
+    onSelect(beatIndex, half, null);
     setSelectedRoot(null);
     onClose();
   };
+
+  const halfLabel = half === "first" ? "1st half" : "2nd half";
 
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
       <DialogTitle>
         Select Chord - Measure {Math.floor(beatIndex / 4) + 1}, Beat{" "}
-        {(beatIndex % 4) + 1}
+        {(beatIndex % 4) + 1} ({halfLabel})
         {currentChord && (
           <Chip
             label={`Current: ${currentChord}`}
-            color="primary"
+            color={half === "first" ? "primary" : "secondary"}
             size="small"
             sx={{ ml: 2 }}
           />
